@@ -24,8 +24,10 @@ LOG_DIR.mkdir(exist_ok=True)
 
 logger = logging.getLogger("checkout")
 logger.setLevel(logging.INFO)
-handler = logging.FileHandler(LOG_DIR / "app.log")
-handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s checkout: %(message)s", "%Y-%m-%dT%H:%M:%SZ"))
+handler = logging.FileHandler(LOG_DIR / "app.log", encoding="utf-8")
+formatter = logging.Formatter("%(asctime)s %(levelname)s checkout: %(message)s", "%Y-%m-%dT%H:%M:%SZ")
+formatter.converter = time.gmtime
+handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 app = FastAPI(title="checkout-service-demo")
@@ -77,8 +79,8 @@ def health():
 
 
 @app.get("/metrics")
-def metrics():
-    return JSONResponse(_error_rate(60))
+def metrics(window_s: int = 60):
+    return JSONResponse(_error_rate(min(max(window_s, 1), WINDOW_S)))
 
 
 @app.get("/status", response_class=HTMLResponse)
